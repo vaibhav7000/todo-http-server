@@ -133,6 +133,75 @@ app.post("/todos", async function(req, res) {
 
 })
 
+app.put("/todos/:id", async function(req, res) {
+    const id = req.params.id;
+    const updatedTodo = req.body;
+
+    try {
+        if(!isOnlyNumbers(id)) {
+            const error = new Error("Invalid inputs");
+            err.statusCode = 411;
+            throw error;
+        }
+
+        if(!updatedTodo) {
+            const error = new Error("Invalid inputs");
+            err.statusCode = 411;
+            throw error;
+        }
+
+        // if we does not get title, description, or completed we will set the default value
+        const allTodos = await readFilePromise(storagePath);
+        const replaceTodoIndex = allTodos.findIndex(t => t.id == id);
+
+        if(replaceTodoIndex < 0) {
+            const error = new Error("Todo not Found");
+            error.statusCode = 404
+            throw error
+        }
+
+        allTodos[replaceTodoIndex].title = todo.title ? todo.title : allTodos[replaceTodoIndex].title,
+        allTodos[replaceTodoIndex].description = todo.description ? todo.description : allTodos[replaceTodoIndex].description
+        allTodos[replaceTodoIndex].completed = todo.completed ? todo.completed : allTodos[replaceTodoIndex].completed;
+
+        // write the latest todo to the file
+        const response = await writeFilePromise(storagePath, JSON.stringify(allTodos));
+        console.log(response);
+
+        res.status(200).send("Todo Updated")
+    } catch (error) {
+        res.status(error.statusCode).send(error.message);
+    }
+
+})
+
+app.delete("/todos/:id", async function(req, res) {
+    const id = req.params.id
+
+    try {
+        if(!isOnlyNumbers(id)) {
+            const error = new Error("Invalid Id as inputs");
+            err.statusCode = 411;
+            throw error;
+        }
+        
+        const allTodos = await readFilePromise(storagePath);
+
+        const deleteTodoIndex = allTodos.findIndex(t => t.id == id);
+
+        // will be using splice
+        allTodos.splice(deleteTodoIndex, 1);
+
+        const response = await writeFilePromise(storagePath, allTodos);
+
+        res.status(200).send("Deleted Todo");
+    } catch (error) {
+        res.status(error.statusCode).send(error.message);
+    }
+})
+
+
+
 
 
 // Route-handler if the client route does not match with the above routes
